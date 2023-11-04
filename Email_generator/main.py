@@ -2,9 +2,7 @@ import streamlit as st
 import openai
 import os
 from dotenv import load_dotenv
-from PIL import Image
 import time
-import matplotlib.pyplot as plt
 
 
 load_dotenv()
