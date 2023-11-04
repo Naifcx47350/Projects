@@ -51,6 +51,13 @@ if not session_state.api_key:
     st.title("Welcome to Email Generator!")
     st.write("Please enter your OpenAI API key to begin:")
     temp_key = st.text_input("OpenAI API Key:", type="password")
+    api_key_url = "https://www.maisieai.com/help/how-to-get-an-openai-api-key-for-chatgpt"
+    html_code = f"""
+    <ul style="list-style-type: none; padding-left: 0;">
+    <li>Need an API key? <a href="{api_key_url}" target="_blank">Learn how to obtain one here.</a></li>
+    </ul>
+    """
+    st.markdown(html_code, unsafe_allow_html=True)
 
     if st.button("Submit"):
         # Placeholder validation (you can replace this with more sophisticated checks)
