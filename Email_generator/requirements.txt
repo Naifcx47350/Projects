@@ -1,6 +1,18 @@
 
+librairies utilisées :
+
+```
 streamlit
+streamlit-lottie
+
 openai
+
 dotenv
 os
+
+requests
+json
+
 time
+```
+

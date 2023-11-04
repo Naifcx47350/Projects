@@ -3,8 +3,22 @@ import openai
 import os
 from dotenv import load_dotenv
 import time
+from streamlit_lottie import st_lottie
+import requests
+import json
 
 
+# ? Setting the page configuration
+st.set_page_config(
+    page_title="Email Generator",
+    page_icon="📧",
+    layout="wide",
+    initial_sidebar_state="collapsed",
+    menu_items={'Get Help': 'https://www.github.com/Naifcx47350'}
+
+)
+
+# ? Loading the environment variables
 load_dotenv()
 
 
@@ -17,6 +31,19 @@ if not api_key:
 
 # ? defining the openai api key
 openai.api_key = api_key
+
+
+def load_lottiefile(filepath: str):
+    if "http" in filepath:
+        r = requests.get(filepath)
+        return r.json()
+    else:
+        with open(filepath) as f:
+            return json.load(f)
+
+
+# ? Loading the lottie file
+lottie_file = load_lottiefile("Animation\\robot.json")
 
 
 @st.cache_data
@@ -134,6 +161,7 @@ def sidebar_features():
     st.sidebar.markdown(
         """
             - Don't input sensitive data.
+            - currently if you change the mode from full customization to just the essentials, the app will not show the previously generated emails. so please download them before changing the mode.
             - Provide as much information as possible.
             - Provide a clear description , subject and purpose.
             - The restrictions can be words to include or exclude, a specific format, or any other restrictions you would like to put on the email.
@@ -176,9 +204,17 @@ def choose_salutation():
 
 def main():
     sidebar_features()
+
     st.title('Email Generator')
-    st.subheader(
-        "welcome to the email generator app, this app will help you generate an email based on the information you provide.")
+
+    left_column, right_column = st.columns(2)
+    with left_column:
+        st.subheader(
+            "welcome to the email generator app, this app will help you generate an email based on the information you provide.")
+
+    with right_column:
+        st_lottie(lottie_file, speed=1, height=150,
+                  key="initial", loop=True, reverse=False)
 
     # ? Initializing the generated emails list
     if 'generated_emails' not in st.session_state:
