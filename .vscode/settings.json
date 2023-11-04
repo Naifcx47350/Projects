@@ -1,3 +1,11 @@
 {
-  "cSpell.words": ["dotenv", "openai", "selectbox"]
+  "cSpell.words": [
+    "Alsahabi",
+    "dotenv",
+    "figsize",
+    "imshow",
+    "openai",
+    "selectbox",
+    "wordcloud"
+  ]
 }
