@@ -1,3 +1,12 @@
+this is a simple project to test the openai api and streamlit
+
+to run the project, you need to create a .env file with your openai api key
+or you can just replace the os.getenv("OPENAI_API_KEY") by your api key in the code
+
+to run the website streamlit run main.py 
+
+
+
 
 librairies utilisées :
 

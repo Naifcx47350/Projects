@@ -18,19 +18,50 @@ st.set_page_config(
 
 )
 
+
 # ? Loading the environment variables
-load_dotenv()
+dotenv_path = ("projects\Email_generator\.env")
+load_dotenv(dotenv_path)
+
+session_state = st.session_state
 
 
-# ! to run this app you need to provide your openai api key in the api_key variable below
-api_key = os.getenv("OPEN_API_KEY")
+if "api_key" not in session_state:
+    session_state.api_key = None
 
-if not api_key:
-    st.error("OpenAI API key not found. Please ensure it's set in your environment.")
-    st.stop()
 
-# ? defining the openai api key
-openai.api_key = api_key
+# ? Check if the provided OpenAI API key is valid
+def is_valid_openai_key(api_key):
+    """Check if the provided OpenAI API key is valid."""
+    openai.api_key = api_key
+    try:
+        # Make a test call. Here we'll list available engines, which is a lightweight call.
+        response = openai.Engine.list()
+        if response and 'data' in response:
+            return True
+    except openai.error.OpenAIError as e:
+        # Handle specific authentication error
+        if "Authentication" in str(e):
+            return False
+    return False
+
+
+# ? If API key has not been set, show the input
+if not session_state.api_key:
+    st.title("Welcome to Email Generator!")
+    st.write("Please enter your OpenAI API key to begin:")
+    temp_key = st.text_input("OpenAI API Key:", type="password")
+
+    if st.button("Submit"):
+        # Placeholder validation (you can replace this with more sophisticated checks)
+        if len(temp_key) < 20:
+            st.error("The API key seems too short. Please recheck.")
+        else:
+            if is_valid_openai_key(temp_key):
+                session_state.api_key = temp_key
+                st.experimental_rerun()
+            else:
+                st.error("The provided API key is invalid. Please recheck.")
 
 
 def load_lottiefile(filepath: str):
@@ -205,214 +236,215 @@ def choose_salutation():
 def main():
     sidebar_features()
 
-    st.title('Email Generator')
+    if session_state.api_key:
+        st.title('Email Generator')
 
-    left_column, right_column = st.columns(2)
-    with left_column:
-        st.subheader(
-            "welcome to the email generator app, this app will help you generate an email based on the information you provide.")
+        left_column, right_column = st.columns(2)
+        with left_column:
+            st.subheader(
+                "welcome to the email generator app, this app will help you generate an email based on the information you provide.")
 
-    with right_column:
-        st_lottie(lottie_file, speed=1, height=150,
-                  key="initial", loop=True, reverse=False)
+        with right_column:
+            st_lottie(lottie_file, speed=1, height=150,
+                      key="initial", loop=True, reverse=False)
 
-    # ? Initializing the generated emails list
-    if 'generated_emails' not in st.session_state:
-        st.session_state.generated_emails = []
+        # ? Initializing the generated emails list
+        if 'generated_emails' not in st.session_state:
+            st.session_state.generated_emails = []
 
-    mode_choice = st.radio(
-        "How detailed do you want your email customization to be?",
-        ["Just the essentials", "Full customization"]
-    )
-
-    if mode_choice == "Full customization":
-        st.markdown(
-            "### Full customization mode")
-        st.markdown(
-            "In this mode you will be able to customize the email as much as you want.")
-
-        # ? Selecting the tone of email
-        email_tone = st.radio(
-            'What is the tone of the email you would like to generate?',
-            ('formal', 'informal', 'informative')
+        mode_choice = st.radio(
+            "How detailed do you want your email customization to be?",
+            ["Just the essentials", "Full customization"]
         )
 
-        # ? Selecting the length of the email
-        email_length = st.selectbox(
-            'Select the length of the email:',
-            ('short', 'regular', 'long', 'super long')
-        )
+        if mode_choice == "Full customization":
+            st.markdown(
+                "### Full customization mode")
+            st.markdown(
+                "In this mode you will be able to customize the email as much as you want.")
 
-        email_type = st.radio(
-            'what is the type of email you would like to generate?',
-            ('new email', 'reply to email')
-        )
+            # ? Selecting the tone of email
+            email_tone = st.radio(
+                'What is the tone of the email you would like to generate?',
+                ('formal', 'informal', 'informative')
+            )
 
-        # ? Selecting the language of the email
-        email_Language = st.radio(
-            'What type of email would you like to generate?',
-            ('English', 'Arabic', 'Spanish')
-        )
+            # ? Selecting the length of the email
+            email_length = st.selectbox(
+                'Select the length of the email:',
+                ('short', 'regular', 'long', 'super long')
+            )
 
-        st.markdown('---')
+            email_type = st.radio(
+                'what is the type of email you would like to generate?',
+                ('new email', 'reply to email')
+            )
 
-        salutation = choose_salutation()
-
-        st.markdown('---')
-
-        if email_type == 'new email':
-            st.subheader('New Email')
-
-            # ? Defining the purpose of the email
-            Purpose = st.text_input('Enter the purpose of your email:')
-            sender_email = None
-        else:
-            st.subheader('Reply to Email')
-
-            # ? getting the sender email for the reply
-            sender_email = st.text_area('Enter the sender email:')
-            Purpose = None
-
-        # ? Defining the subject of the email
-        subject = st.text_input('Enter the subject of your email:')
-
-        # ? Defining the description of the email
-        description = st.text_area(
-            'Enter a brief description or the body of your email:')
-
-        # ? Selecting any restrictions for the email
-        restrictions = st.text_area(
-            'Enter any restrictions for the email, such as words to include or exclude:') if st.checkbox('Do you have any restrictions to put in this email?') else 'no restrictions'
-
-        st.markdown('---')
-
-        display_notice()
-
-        st.markdown('---')
-
-        # ? Generate the email
-        if st.button('Generate Email'):
-
-            if not subject or not description:
-                st.warning(
-                    "Please provide both a subject and a description for the email.")
-                return
-
-            prompt = generate_prompt(email_tone, email_length, email_type,
-                                     email_Language, subject, description, restrictions, Purpose, sender_email, salutation)
-            try:
-
-                email_content = generate_email(
-                    prompt, email_length)
-                progress_bar = show_progress_bar()
-                st.session_state.generated_emails.append(email_content)
-
-                st.subheader('Generated Email:')
-                st.text_area("Generated Email:", email_content, height=400)
-
-                st.download_button('Download Email', email_content,
-                                   file_name='generated_email.txt')
-
-            except Exception as e:
-                progress_bar = show_progress_bar()
-                progress_bar.empty()
-                st.error(
-                    'Something went wrong, please try again or contact the developer.')
-                st.error(e)
+            # ? Selecting the language of the email
+            email_Language = st.radio(
+                'What type of email would you like to generate?',
+                ('English', 'Arabic', 'Spanish')
+            )
 
             st.markdown('---')
-            # ? View generated emails
-            for idx, email in enumerate(st.session_state.generated_emails, start=1):
-                with st.expander(f"View Generated Email no. {idx}"):
-                    st.text_area("Generated Email:", email_content,
-                                 height=400, key=idx)
-                    st.download_button(
-                        f'Download Email {idx}', email, file_name=f'generated_email_{idx}.txt')
 
-    elif mode_choice == "Just the essentials":
-        st.markdown(
-            "### Just the essentials mode")
-        st.markdown(
-            "In this mode you will be able to customize the email with the essentials only.")
-
-        email_tone = "formal"
-        email_length = "short"
-        email_Language = "english"
-        salutation = "Dear [Name]"
-
-        email_type = st.radio(
-            'what is the type of email you would like to generate?',
-            ('new email', 'reply to email')
-        )
-
-        st.markdown('---')
-
-        if email_type == 'new email':
-            st.subheader('New Email')
-
-            # ? Defining the purpose of the email
-            Purpose = st.text_input('Enter the purpose of your email:')
-
-        else:
-            st.subheader('Reply to Email')
-
-            # ? getting the sender email for the reply
-            sender_email = st.text_area('Enter the sender email:')
-
-        # ? Defining the subject of the email
-        subject = st.text_input('Enter the subject of your email:')
-
-        # ? Defining the description of the email
-        description = st.text_area(
-            'Enter a brief description or the body of your email:')
-
-        # ? Selecting any restrictions for the email
-        restrictions = st.text_area(
-            'Enter any restrictions for the email, such as words to include or exclude:') if st.checkbox('Do you have any restrictions to put in this email?') else 'no restrictions'
-
-        st.markdown('---')
-
-        display_notice()
-
-        st.markdown('---')
-
-        # ? Generate the email
-        if st.button('Generate Email'):
-
-            if not subject or not description:
-                st.warning(
-                    "Please provide both a subject and a description for the email.")
-                return
-
-            prompt = generate_prompt(email_tone, email_length, email_type,
-                                     email_Language, subject, description, restrictions, Purpose, salutation)
-            try:
-                email_content = generate_email(
-                    prompt, email_length)
-                progress_bar = show_progress_bar()
-                st.session_state.generated_emails.append(email_content)
-
-                st.subheader('Generated Email:')
-                st.text_area("Generated Email:", email_content, height=400)
-
-                st.download_button('Download Email', email_content,
-                                   file_name='generated_email.txt')
-
-            except Exception as e:
-                progress_bar = show_progress_bar()
-                progress_bar.empty()
-                st.error(
-                    'Something went wrong, please try again or contact the developer.')
-                st.error(e)
+            salutation = choose_salutation()
 
             st.markdown('---')
-            # ? View generated emails
-            for idx, email in enumerate(st.session_state.generated_emails, start=1):
-                with st.expander(f"View Generated Email no. {idx}"):
-                    st.text_area("Generated Email:", email_content,
-                                 height=400, key=idx)
-                    st.download_button(
-                        f'Download Email {idx}', email, file_name=f'generated_email_{idx}.txt')
+
+            if email_type == 'new email':
+                st.subheader('New Email')
+
+                # ? Defining the purpose of the email
+                Purpose = st.text_input('Enter the purpose of your email:')
+                sender_email = None
+            else:
+                st.subheader('Reply to Email')
+
+                # ? getting the sender email for the reply
+                sender_email = st.text_area('Enter the sender email:')
+                Purpose = None
+
+            # ? Defining the subject of the email
+            subject = st.text_input('Enter the subject of your email:')
+
+            # ? Defining the description of the email
+            description = st.text_area(
+                'Enter a brief description or the body of your email:')
+
+            # ? Selecting any restrictions for the email
+            restrictions = st.text_area(
+                'Enter any restrictions for the email, such as words to include or exclude:') if st.checkbox('Do you have any restrictions to put in this email?') else 'no restrictions'
+
+            st.markdown('---')
+
+            display_notice()
+
+            st.markdown('---')
+
+            # ? Generate the email
+            if st.button('Generate Email'):
+
+                if not subject or not description:
+                    st.warning(
+                        "Please provide both a subject and a description for the email.")
+                    return
+
+                prompt = generate_prompt(email_tone, email_length, email_type,
+                                         email_Language, subject, description, restrictions, Purpose, sender_email, salutation)
+                try:
+
+                    email_content = generate_email(
+                        prompt, email_length)
+                    progress_bar = show_progress_bar()
+                    st.session_state.generated_emails.append(email_content)
+
+                    st.subheader('Generated Email:')
+                    st.text_area("Generated Email:", email_content, height=400)
+
+                    st.download_button('Download Email', email_content,
+                                       file_name='generated_email.txt')
+
+                except Exception as e:
+                    progress_bar = show_progress_bar()
+                    progress_bar.empty()
+                    st.error(
+                        'Something went wrong, please try again or contact the developer.')
+                    st.error(e)
+
+                st.markdown('---')
+                # ? View generated emails
+                for idx, email in enumerate(st.session_state.generated_emails, start=1):
+                    with st.expander(f"View Generated Email no. {idx}"):
+                        st.text_area("Generated Email:", email_content,
+                                     height=400, key=idx)
+                        st.download_button(
+                            f'Download Email {idx}', email, file_name=f'generated_email_{idx}.txt')
+
+        elif mode_choice == "Just the essentials":
+            st.markdown(
+                "### Just the essentials mode")
+            st.markdown(
+                "In this mode you will be able to customize the email with the essentials only.")
+
+            email_tone = "formal"
+            email_length = "short"
+            email_Language = "english"
+            salutation = "Dear [Name]"
+
+            email_type = st.radio(
+                'what is the type of email you would like to generate?',
+                ('new email', 'reply to email')
+            )
+
+            st.markdown('---')
+
+            if email_type == 'new email':
+                st.subheader('New Email')
+
+                # ? Defining the purpose of the email
+                Purpose = st.text_input('Enter the purpose of your email:')
+
+            else:
+                st.subheader('Reply to Email')
+
+                # ? getting the sender email for the reply
+                sender_email = st.text_area('Enter the sender email:')
+
+            # ? Defining the subject of the email
+            subject = st.text_input('Enter the subject of your email:')
+
+            # ? Defining the description of the email
+            description = st.text_area(
+                'Enter a brief description or the body of your email:')
+
+            # ? Selecting any restrictions for the email
+            restrictions = st.text_area(
+                'Enter any restrictions for the email, such as words to include or exclude:') if st.checkbox('Do you have any restrictions to put in this email?') else 'no restrictions'
+
+            st.markdown('---')
+
+            display_notice()
+
+            st.markdown('---')
+
+            # ? Generate the email
+            if st.button('Generate Email'):
+
+                if not subject or not description:
+                    st.warning(
+                        "Please provide both a subject and a description for the email.")
+                    return
+
+                prompt = generate_prompt(email_tone, email_length, email_type,
+                                         email_Language, subject, description, restrictions, Purpose, salutation)
+                try:
+                    email_content = generate_email(
+                        prompt, email_length)
+                    progress_bar = show_progress_bar()
+                    st.session_state.generated_emails.append(email_content)
+
+                    st.subheader('Generated Email:')
+                    st.text_area("Generated Email:", email_content, height=400)
+
+                    st.download_button('Download Email', email_content,
+                                       file_name='generated_email.txt')
+
+                except Exception as e:
+                    progress_bar = show_progress_bar()
+                    progress_bar.empty()
+                    st.error(
+                        'Something went wrong, please try again or contact the developer.')
+                    st.error(e)
+
+                st.markdown('---')
+                # ? View generated emails
+                for idx, email in enumerate(st.session_state.generated_emails, start=1):
+                    with st.expander(f"View Generated Email no. {idx}"):
+                        st.text_area("Generated Email:", email_content,
+                                     height=400, key=idx)
+                        st.download_button(
+                            f'Download Email {idx}', email, file_name=f'generated_email_{idx}.txt')
 
     st.caption('Made by Naif Alsahabi')
     st.caption('v1.0')
