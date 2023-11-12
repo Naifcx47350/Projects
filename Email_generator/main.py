@@ -134,10 +134,12 @@ def sidebar_features():
 
     # ? 1. About Section
     st.sidebar.header("About")
-    st.sidebar.text(
-        "This app is built using OpenAI's ")
-    st.sidebar.text(
-        "to generate emails based on user input.")
+    st.sidebar.markdown(
+        """
+            - This app is built using OpenAI's.
+            - to generate emails based on user input.
+        """
+    )
 
     # ? 2. Feedback Form
     telegram_icon = "https://cdn3.iconfinder.com/data/icons/social-icons-33/512/Telegram-16.png"
