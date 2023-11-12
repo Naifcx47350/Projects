@@ -26,10 +26,9 @@ load_dotenv()
 session_state = st.session_state
 
 # ? Getting the OpenAI API key from the environment variables
-if "OPEN_API_KEY" in st.secrets:
+if 'streamlit' in os.environ.get('SERVER_SOFTWARE', '').lower():
     api_key = st.secrets["OPEN_API_KEY"]
 else:
-    # ? If not found in Streamlit secrets, fall back to .env file
     api_key = os.getenv("OPEN_API_KEY")
 
 openai.api_key = api_key
@@ -62,7 +61,7 @@ def load_lottiefile(filepath: str):
 
 
 # ? Loading the lottie file
-lottie_file = load_lottiefile("/Animation/robot.json")
+lottie_file = load_lottiefile("Animation/robot.json")
 
 
 @st.cache_data
