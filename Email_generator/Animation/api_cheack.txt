@@ -1,0 +1,39 @@
+# ? Check if the provided OpenAI API key is valid
+def is_valid_openai_key(api_key):
+    """Check if the provided OpenAI API key is valid."""
+    openai.api_key = api_key
+    try:
+        # ! Make a test call. Here we'll list available engines, which is a lightweight call.
+        response = openai.Engine.list()
+        if response and 'data' in response:
+            return True
+    except openai.error.OpenAIError as e:
+        # ! Handle specific authentication error
+        if "Authentication" in str(e):
+            return False
+    return False
+
+
+# ? If API key has not been set, show the input
+if not session_state.api_key:
+    st.title("Welcome to Email Generator!")
+    st.write("Please enter your OpenAI API key to begin:")
+    temp_key = st.text_input("OpenAI API Key:", type="password")
+    api_key_url = "https://www.maisieai.com/help/how-to-get-an-openai-api-key-for-chatgpt"
+    html_code = f"""
+    <ul style="list-style-type: none; padding-left: 0;">
+    <li>Need an API key? <a href="{api_key_url}" target="_blank">Learn how to obtain one here.</a></li>
+    </ul>
+    """
+    st.markdown(html_code, unsafe_allow_html=True)
+
+    if st.button("Submit"):
+        # Placeholder validation (you can replace this with more sophisticated checks)
+        if len(temp_key) < 20:
+            st.error("The API key seems too short. Please recheck.")
+        else:
+            if is_valid_openai_key(temp_key):
+                session_state.api_key = temp_key
+                st.experimental_rerun()
+            else:
+                st.error("The provided API key is invalid. Please recheck.")
