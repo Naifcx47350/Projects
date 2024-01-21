@@ -1,3 +1,10 @@
+ session_state = st.session_state
+
+
+ if "api_key" not in session_state:
+     session_state.api_key = None
+
+
 # ? Check if the provided OpenAI API key is valid
 def is_valid_openai_key(api_key):
     """Check if the provided OpenAI API key is valid."""
