@@ -1,5 +1,16 @@
 {%extends 'base.html'%} {%block head%}
-<title>Home</title>
-{%endblock%} {%block Body%}
-<h1>Home</h1>
+<title>Twiter town</title>
+{%endblock%} {%block body%}
+<div id="content">
+  <h1>Project "TT</h1>
+  <p>
+    Welcome to the project "TT" - a mini social network for sharing thoughts and
+    ideas. Here you can create a profile, post messages, and follow other users.
+    Enjoy!
+  </p>
+</div>
+
+<div id="pics">
+  <img src="{{ url_for('static', filename = 'images/1.jpg') }}" alt="pic1" />
+</div>
 {%endblock%}
