@@ -1,3 +1,6 @@
 {
-  "cSpell.words": ["Codeing"]
+  "cSpell.words": ["Codeing"],
+  "favorites.groups": ["Default", "P1"],
+  "favorites.currentGroup": "P1",
+  "favorites.sortOrder": "DESC"
 }

@@ -13,7 +13,25 @@ head {
 }
 
 #content {
-  color: #000000;
+  color: #963c3c;
   padding: 10px 0;
   text-align: center;
+}
+
+#pics {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 200px;
+  height: 200px;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+#pics img {
+  display: block; /* Ensures the image is treated as a block-level element */
+  margin: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
